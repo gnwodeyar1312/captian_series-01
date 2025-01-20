@@ -9,6 +9,7 @@ const {
 const {
   validateUsernameAndEmail,
   validateUnsplash,
+  validateSavePhotos,
 } = require("../validations/index.js");
 
 const doesUserExist = async (email) => {
@@ -27,11 +28,9 @@ const createNewUser = async (req, res) => {
     const { username, email } = req.body;
     const userExists = await doesUserExist(email);
     if (userExists)
-      return res
-        .status(400)
-        .json({
-          message: "User email already exists, please use different email.",
-        });
+      return res.status(400).json({
+        message: "User email already exists, please use different email.",
+      });
 
     let newUser = await userModel.create({ username, email });
     res.status(201).json({ message: "User Created successfully", newUser });
@@ -44,7 +43,7 @@ const createNewUser = async (req, res) => {
 const searchImages = async (req, res) => {
   const errors = validateUnsplash(req.query);
   if (errors.length > 0) return res.status(400).json({ errors });
-  
+
   try {
     const { query } = req.query;
     const response = await axiosInstance.get(`/search/photos`, {
@@ -53,37 +52,54 @@ const searchImages = async (req, res) => {
       },
     });
 
-    // console.log(response.data);  
+    // console.log(response.data);
     const images = response.data.results || [];
     if (images.length === 0) {
-      return res.status(404).json({ 
-        message: `No Data/Images found for query ${query}`
+      return res.status(404).json({
+        message: `No Data/Images found for query ${query}`,
       });
     }
 
-    const transformedImages = images.map(image => ({
+    const transformedImages = images.map((image) => ({
       id: image.id,
       urls: image.urls,
       description: image.description,
       alt_description: image.alt_description,
       user: {
         name: image.user.name,
-        username: image.user.username
-      }
+        username: image.user.username,
+      },
     }));
 
     return res.status(200).json({
       query,
       total: images.length,
-      data: transformedImages
+      data: transformedImages,
     });
-
   } catch (error) {
-    console.error('Unsplash API Error:', error.response?.data || error.message);
-    return res.status(500).json({ 
-      message: "Unable to search images in unsplash" 
+    console.error("Unsplash API Error:", error.response?.data || error.message);
+    return res.status(500).json({
+      message: "Unable to search images in unsplash",
     });
   }
 };
 
-module.exports = { createNewUser, searchImages };
+const addPhoto = async (req, res) => {
+  let errors = validateSavePhotos(req.body);
+  if (errors.length > 0) return res.status(400).json({ errors });
+
+  try {
+    const { imageUrl, description, altDescription, tags, userId } = req.body;
+    const savePhoto = await photoModel.create({
+      imageUrl,
+      description,
+      altDescription,
+      tags,
+      userId,
+    });
+
+    return res.status(200).json({ message: "Photo Saved Successfully", savePhoto})
+  } catch (error) {}
+};
+
+module.exports = { createNewUser, searchImages, addPhoto };
