@@ -57,6 +57,7 @@ function validateSavePhotos(query) {
   return errors;
 }
 
+
 module.exports = {
   validateUsernameAndEmail,
   validateUnsplash,

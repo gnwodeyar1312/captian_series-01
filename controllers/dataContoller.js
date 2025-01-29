@@ -98,8 +98,15 @@ const addPhoto = async (req, res) => {
       userId,
     });
 
-    return res.status(200).json({ message: "Photo Saved Successfully", savePhoto})
-  } catch (error) {}
+    return res
+      .status(201)
+      .json({ message: "Photo Saved Successfully", savePhoto });
+  } catch (error) {
+    return res.status(500).json({ message: "Unable too save photos" });
+  }
 };
+
+
+
 
 module.exports = { createNewUser, searchImages, addPhoto };
